@@ -1,0 +1,20 @@
+# AI coding agent project settings — local overrides, gitignored
+.claude/settings.local.json
+
+# Secrets — never commit
+.env
+.env.local
+.env.production
+.env.staging
+*.pem
+*.key
+secrets/
+credentials/
+
+# .env.test IS committed (dummy values only)
+!.env.test
+
+# Virtual environments
+.venv/
+__pycache__/
+*.pyc
