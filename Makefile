@@ -37,3 +37,6 @@ clean:               ## Remove __pycache__ + .pytest_cache + .ruff_cache
 	@find . -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf .pytest_cache .ruff_cache dist build
 	@echo "Cleaned."
+
+run-calibration:     ## Run the DSPy judge calibration script
+	uv run python src/scripts/01_calibrate_judge.py

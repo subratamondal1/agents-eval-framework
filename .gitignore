@@ -18,3 +18,8 @@ credentials/
 .venv/
 __pycache__/
 *.pyc
+
+# Local evaluation caches
+.dspy_cache/
+data/
+results/
