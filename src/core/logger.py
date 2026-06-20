@@ -1,7 +1,8 @@
 from __future__ import annotations
 import logging
 import structlog
-from src.core.config import get_settings
+from core.config import get_settings
+
 
 def configure_logging() -> None:
     settings = get_settings()
@@ -49,6 +50,7 @@ def configure_logging() -> None:
 
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("litellm").setLevel(logging.ERROR)
+
 
 def get_logger() -> structlog.stdlib.BoundLogger:
     return structlog.get_logger()

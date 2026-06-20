@@ -1,10 +1,11 @@
 from __future__ import annotations
 import litellm
 import structlog
-from src.core.config import get_settings
+from core.config import get_settings
 from .schemas import EvaluateRequest, EvaluateResponse
 
 logger = structlog.get_logger()
+
 
 async def execute_evaluation(
     *,
@@ -16,10 +17,7 @@ async def execute_evaluation(
         {"type": "text", "text": data.prompt}
     ]
     for img_url in data.images:
-        content.append({
-            "type": "image_url",
-            "image_url": {"url": img_url}
-        })
+        content.append({"type": "image_url", "image_url": {"url": img_url}})
 
     logger.info(
         "evaluation_started",

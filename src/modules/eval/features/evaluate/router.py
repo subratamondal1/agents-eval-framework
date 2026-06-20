@@ -5,6 +5,7 @@ from .logic import execute_evaluation
 
 router = APIRouter(prefix="/evaluate", tags=["evaluate"])
 
+
 @router.post("/", status_code=200, response_model=EvaluateResponse)
 async def evaluate_endpoint(
     data: EvaluateRequest,

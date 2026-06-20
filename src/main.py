@@ -2,11 +2,14 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
-from src.core.config import get_settings
-from src.core.logger import configure_logging, get_logger
-from src.core.middleware import TimingMiddleware, RequestIdMiddleware
+from core.config import get_settings
+from core.logger import configure_logging, get_logger
+from core.middleware import TimingMiddleware, RequestIdMiddleware
+from modules.eval.public_api import evaluate_router
+from runtime_api import router as health_router
 
 logger = get_logger()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -23,6 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     logger.info("app_shutdown")
 
+
 settings = get_settings()
 
 app = FastAPI(
@@ -34,9 +38,6 @@ app = FastAPI(
 
 app.add_middleware(TimingMiddleware)
 app.add_middleware(RequestIdMiddleware)
-
-from src.runtime_api import router as health_router
-from src.modules.eval.public_api import evaluate_router
 
 app.include_router(health_router)
 app.include_router(evaluate_router, prefix=settings.api_prefix)
