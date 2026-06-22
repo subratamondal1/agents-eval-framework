@@ -44,14 +44,18 @@ litellm.retry_policy = True  # enable exponential backoff
 import datetime
 run_timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 TRACES_FILE = Path("/Users/subratamondal/Workspace/agents-eval-framework/data/voice_sales_traces.json")
-RESULTS_DIR = Path(f"/Users/subratamondal/Workspace/agents-eval-framework/results/run_{run_timestamp}_blinded")
+RESULTS_DIR = Path(f"/Users/subratamondal/Workspace/agents-eval-framework/results/run_{run_timestamp}_v5_finops")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 load_dotenv()
 
-# Setup LiteLLM through DSPy
-lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-flash")
-dspy.settings.configure(lm=lm)
+# Setup Specialized LMs for V5 Agentic FinOps Routing
+flash_lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-flash")
+pro_lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-pro")
+glm_lm = dspy.LM("fireworks_ai/accounts/fireworks/models/glm-5p2")
+
+# Configure flash as the default global fallback, though we will explicitly route context
+dspy.settings.configure(lm=flash_lm)
 
 
 # --- Step 1: Stratification Plan ---
@@ -88,14 +92,21 @@ class JudgeBookingSignature(dspy.Signature):
     is_booked: bool = dspy.OutputField(desc="True if the appointment was successfully booked, False otherwise.")
 
 class VoiceCallJudge(dspy.Module):
-    def __init__(self):
+    def __init__(self, extractor_lm, judge_lm):
         super().__init__()
         self.extractor = dspy.ChainOfThought(ExtractIntentSignature)
         self.judge = dspy.ChainOfThought(JudgeBookingSignature)
+        self.extractor_lm = extractor_lm
+        self.judge_lm = judge_lm
 
     def forward(self, transcript: str):
-        context = self.extractor(transcript=transcript)
-        return self.judge(agent_intent=context.agent_intent, caller_reaction=context.caller_reaction)
+        # Step 1: Extractor uses a high-intelligence model for NIAH + IFEval
+        with dspy.context(lm=self.extractor_lm):
+            context = self.extractor(transcript=transcript)
+            
+        # Step 2: Judge uses an ultra-cheap model for deterministic logic
+        with dspy.context(lm=self.judge_lm):
+            return self.judge(agent_intent=context.agent_intent, caller_reaction=context.caller_reaction)
 
 
 def custom_gepa_metric(gold: dspy.Example, pred: dspy.Prediction, trace=None, pred_name=None, pred_trace=None) -> dspy.Prediction:
@@ -119,13 +130,15 @@ async def calibrate_judge(train_data: list[dspy.Example]):
     from dspy.teleprompt import GEPA
     
     # Since we only have a 5-trace sample, we use 'light'.
+    # For GEPA reflection, we use a high-intelligence, cost-effective GPQA model
     optimizer = GEPA(
         metric=custom_gepa_metric,
         auto='light',
-        reflection_lm=dspy.settings.lm
+        reflection_lm=glm_lm
     )
     
-    student = VoiceCallJudge()
+    # Inject the routed LMs into the student execution graph
+    student = VoiceCallJudge(extractor_lm=pro_lm, judge_lm=flash_lm)
     
     print(f"Starting GEPA optimization over {len(train_data)} examples...")
     compiled_judge = optimizer.compile(
@@ -265,7 +278,10 @@ async def main():
     # Save Raw DSPy LLM History as Clean JSON
     history_path = RESULTS_DIR / "dspy_raw_llm_history.json"
     clean_history = []
-    for entry in lm.history:
+    
+    # We must merge histories from all three LMs used in the pipeline
+    combined_history = flash_lm.history + pro_lm.history + glm_lm.history
+    for entry in combined_history:
         clean_history.append({
             "messages": entry.get("messages", []),
             "response_text": entry.get("outputs", [{}])[0].get("text", "") if "outputs" in entry else str(entry.get("response", ""))
