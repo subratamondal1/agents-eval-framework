@@ -50,7 +50,7 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 load_dotenv()
 
 # Setup LiteLLM through DSPy
-lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-pro")
+lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-flash")
 dspy.settings.configure(lm=lm)
 
 
@@ -74,20 +74,28 @@ def print_stratification_plan(df: pd.DataFrame) -> None:
 
 # --- Step 2: DSPy Judge Calibration ---
 
-class JudgeSignature(dspy.Signature):
-    """Evaluate whether an outbound voice sales call successfully resulted in a booked appointment."""
+class ExtractIntentSignature(dspy.Signature):
+    """Extract the primary intent and caller engagement from the transcript."""
     transcript: str = dspy.InputField(desc="The full transcript of the conversation between the AGENT and the CALLER.")
-    rationale: str = dspy.OutputField(desc="One sentence explaining the outcome based on the transcript.")
-    is_booked: bool = dspy.OutputField(desc="True if the appointment was successfully booked, False otherwise.")
+    agent_intent: str = dspy.OutputField(desc="The core goal the agent is attempting in this call.")
+    caller_reaction: str = dspy.OutputField(desc="How the caller responded to the agent.")
 
+class JudgeBookingSignature(dspy.Signature):
+    """Evaluate whether an outbound voice sales call resulted in a booked appointment based on extracted context."""
+    agent_intent: str = dspy.InputField(desc="The core goal the agent is attempting in this call.")
+    caller_reaction: str = dspy.InputField(desc="How the caller responded to the agent.")
+    rationale: str = dspy.OutputField(desc="One sentence explaining the outcome based on the intent and reaction.")
+    is_booked: bool = dspy.OutputField(desc="True if the appointment was successfully booked, False otherwise.")
 
 class VoiceCallJudge(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.predictor = dspy.ChainOfThought(JudgeSignature)
+        self.extractor = dspy.ChainOfThought(ExtractIntentSignature)
+        self.judge = dspy.ChainOfThought(JudgeBookingSignature)
 
     def forward(self, transcript: str):
-        return self.predictor(transcript=transcript)
+        context = self.extractor(transcript=transcript)
+        return self.judge(agent_intent=context.agent_intent, caller_reaction=context.caller_reaction)
 
 
 def custom_gepa_metric(gold: dspy.Example, pred: dspy.Prediction, trace=None, pred_name=None, pred_trace=None) -> dspy.Prediction:
