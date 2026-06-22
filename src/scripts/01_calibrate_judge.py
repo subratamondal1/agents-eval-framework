@@ -41,14 +41,16 @@ litellm.request_timeout = 60
 litellm.retry_policy = True  # enable exponential backoff
 
 # Hardcoded paths per project rules
+import datetime
+run_timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 TRACES_FILE = Path("/Users/subratamondal/Workspace/agents-eval-framework/data/voice_sales_traces.json")
-RESULTS_DIR = Path("/Users/subratamondal/Workspace/agents-eval-framework/results")
+RESULTS_DIR = Path(f"/Users/subratamondal/Workspace/agents-eval-framework/results/run_{run_timestamp}_blinded")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 load_dotenv()
 
 # Setup LiteLLM through DSPy
-lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-flash")
+lm = dspy.LM("fireworks_ai/accounts/fireworks/models/deepseek-v4-pro")
 dspy.settings.configure(lm=lm)
 
 
@@ -206,13 +208,29 @@ async def main():
     import random
     
     # 1. Load Data
+    import re
     with open(TRACES_FILE, 'r') as f:
         traces = json.load(f)
+        
+    def strip_outcome_leakage(transcript: str) -> str:
+        return re.sub(r'\s*\[OUTCOME\]\s*(booked|no_booking)', '', transcript).strip()
+        
+    for t in traces:
+        # Prevent leakage: clean the transcript before the judge ever sees it
+        t["transcript"] = strip_outcome_leakage(t["transcript"])
         
     df = pd.DataFrame(traces)
     
     # Step 1
     print_stratification_plan(df)
+    
+    print("\n" + "="*50)
+    print("STEP 1.5: FIELDS INGESTED BY JUDGE")
+    print("="*50)
+    print("To prevent leakage, the judge ONLY ingests the cleaned `transcript` field.")
+    print("Fields EXCLUDED from the judge context: outcome_booked, roi_usd, model_tier_run, cost_total_usd.")
+    print(f"\nSample Cleaned Transcript (Notice no [OUTCOME] tag):\n{traces[0]['transcript']}")
+    print("="*50 + "\n")
     
     # 2. Build DSPy Example instances
     all_data = []
@@ -222,10 +240,13 @@ async def main():
             outcome_booked=t["outcome_booked"]
         ).with_inputs("transcript"))
         
-    # Sample a maximum of 20 traces for GEPA optimization to save API credits.
-    # The final headroom calculation will still run over all 480 traces.
+    # Sample 20 traces using Stratified Sampling (2 per intent)
     random.seed(42)
-    train_data = random.sample(all_data, min(20, len(all_data)))
+    train_data = []
+    for intent in df['intent'].unique():
+        intent_traces = [d for i, d in enumerate(all_data) if traces[i]['intent'] == intent]
+        chosen = random.sample(intent_traces, min(2, len(intent_traces)))
+        train_data.extend(chosen)
         
     # Step 2
     compiled_judge = await calibrate_judge(train_data)
