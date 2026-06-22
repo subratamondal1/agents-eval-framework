@@ -34,9 +34,9 @@ To prove that the LLM is genuinely evaluating semantic logic and not just patter
 | Run Version | Architecture Strategy | Evaluator Model | Judge Calibration (Cohen's Kappa) |
 |---|---|---|---|
 | **V1** | Single-Pass (Unblinded Text Leakage) | `deepseek-v4-flash` | 1.0000 (Artificial Signal) |
-| **V2** | Single-Pass (Strictly Blinded) | `deepseek-v4-flash` | 0.1245 (Baseline Collapse) |
-| **V3** | Single-Pass (Strictly Blinded) | `deepseek-v4-pro` | 0.0130 (Frontier Model Failure) |
-| **V4** | Multi-Agent Orchestration (Blinded) | `deepseek-v4-flash` | *(Pending Execution...)* |
+| V2 | Single-Pass DSPy Signature | `deepseek-v4-flash` | **0.1245** (Failed) |
+| V3 | Single-Pass DSPy Signature | `deepseek-v4-pro` | **0.0130** (Failed - Context Collapse) |
+| V4 | Multi-Agent Orchestration (Extract -> Judge) | `deepseek-v4-flash` | **0.2948** (Failed - Extractor fidelity too low) |
 
 ### Blind Evaluation Data Ingestion
 
