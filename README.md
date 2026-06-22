@@ -29,7 +29,7 @@ A DSPy Judge is optimized over a training subsample using GEPA (Generative Evalu
 
 ### Evaluation Benchmark Matrix
 
-To prove that the LLM is genuinely evaluating semantic logic and not just pattern-matching artifacts, we ran a strict benchmark tracking Kappa scores across multiple architectures.
+To prove that the LLM is genuinely evaluating semantic logic and not just pattern-matching artifacts, I ran a strict benchmark tracking Kappa scores across multiple architectures.
 
 | Run Version | Architecture Strategy | Evaluator Model | Judge Calibration (Cohen's Kappa) |
 |---|---|---|---|
