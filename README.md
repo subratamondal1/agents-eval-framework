@@ -25,8 +25,18 @@ A DSPy Judge is optimized over a training subsample using GEPA (Generative Evalu
 | Metric | Result |
 |--------|--------|
 | Total Traces Evaluated | 480 |
-| Judge Calibration Score (Kappa) | 1.0000 (Perfect Agreement) |
-| Total Cost of Judge (DeepSeek-v4) | ~$0.15 (Total for all 480 traces) |
+| Total FinOps Telemetry Cost | ~$0.15 (Total for all 480 traces) |
+
+### Evaluation Benchmark Matrix
+
+To prove that the LLM is genuinely evaluating semantic logic and not just pattern-matching artifacts, we ran a strict benchmark tracking Kappa scores across multiple architectures.
+
+| Run Version | Architecture Strategy | Evaluator Model | Judge Calibration (Cohen's Kappa) |
+|---|---|---|---|
+| **V1** | Single-Pass (Unblinded Text Leakage) | `deepseek-v4-flash` | 1.0000 (Artificial Signal) |
+| **V2** | Single-Pass (Strictly Blinded) | `deepseek-v4-flash` | 0.1245 (Baseline Collapse) |
+| **V3** | Single-Pass (Strictly Blinded) | `deepseek-v4-pro` | 0.0130 (Frontier Model Failure) |
+| **V4** | Multi-Agent Orchestration (Blinded) | `deepseek-v4-flash` | *(Pending Execution...)* |
 
 ### Blind Evaluation Data Ingestion
 
