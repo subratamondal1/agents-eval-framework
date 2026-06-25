@@ -43,7 +43,7 @@ litellm.retry_policy = True  # enable exponential backoff
 # Hardcoded paths per project rules
 import datetime
 run_timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-TRACES_FILE = Path("/Users/subratamondal/Workspace/agents-eval-framework/data/voice_sales_traces.json")
+TRACES_FILE = Path("/Users/subratamondal/Workspace/agents-eval-framework/data/synthetic_voice_sales_traces.json")
 RESULTS_DIR = Path(f"/Users/subratamondal/Workspace/agents-eval-framework/results/run_{run_timestamp}_v5_finops")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -134,11 +134,11 @@ async def calibrate_judge(train_data: list[dspy.Example]):
     optimizer = GEPA(
         metric=custom_gepa_metric,
         auto='light',
-        reflection_lm=glm_lm
+        reflection_lm=flash_lm
     )
     
     # Inject the routed LMs into the student execution graph
-    student = VoiceCallJudge(extractor_lm=pro_lm, judge_lm=flash_lm)
+    student = VoiceCallJudge(extractor_lm=flash_lm, judge_lm=flash_lm)
     
     print(f"Starting GEPA optimization over {len(train_data)} examples...")
     compiled_judge = optimizer.compile(
