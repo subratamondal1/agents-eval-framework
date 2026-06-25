@@ -261,13 +261,21 @@ async def main():
             outcome_booked=t["outcome_booked"]
         ).with_inputs("transcript"))
         
-    # Sample 20 traces using Stratified Sampling (2 per intent)
+    # Dual-Stratification Matrix: Sample exactly 2 traces per (intent, outcome)
+    # 10 intents * 2 outcomes * 2 traces = 40 traces total
     random.seed(42)
     train_data = []
     for intent in df['intent'].unique():
-        intent_traces = [d for i, d in enumerate(all_data) if traces[i]['intent'] == intent]
-        chosen = random.sample(intent_traces, min(2, len(intent_traces)))
-        train_data.extend(chosen)
+        for outcome in [0, 1]:
+            # Find all traces matching this intent and outcome
+            bucket_traces = [
+                d for i, d in enumerate(all_data) 
+                if traces[i]['intent'] == intent and traces[i]['outcome_booked'] == outcome
+            ]
+            # Randomly select up to 2 traces from this bucket
+            if bucket_traces:
+                chosen = random.sample(bucket_traces, min(2, len(bucket_traces)))
+                train_data.extend(chosen)
         
     # Step 2
     compiled_judge = await calibrate_judge(train_data)
