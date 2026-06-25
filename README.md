@@ -18,14 +18,14 @@ We stratify the real-world transcripts into 10 distinct voice sales intents (48 
 
 A DSPy Judge is optimized over a training subsample using GEPA (Generative Evaluation Prompt Alignment) to evaluate the transcript and output a boolean `judge_score` matching the true CRM outcome.
 
-## Evaluation Results: 480 Trace Dataset
+## Evaluation Results: 300 Trace Dataset
 
-*Note: Evaluation was performed on 480 historical traces evaluating a `frontier` (expensive) model vs a `cheap` (fast) model.*
+*Note: Evaluation was performed on 300 synthetic traces evaluating a `frontier` (expensive) model vs a `cheap` (fast) model.*
 
 | Metric | Result |
 |--------|--------|
-| Total Traces Evaluated | 480 |
-| Total FinOps Telemetry Cost | ~$0.15 (Total for all 480 traces) |
+| Total Traces Evaluated | 300 |
+| Total Dollar Headroom (Savings) | **$0.7730** |
 
 ### Evaluation Benchmark Matrix
 
@@ -37,6 +37,7 @@ To prove that the LLM is genuinely evaluating semantic logic and not just patter
 | V2 | Single-Pass DSPy Signature | `deepseek-v4-flash` | **0.1245** (Failed) |
 | V3 | Single-Pass DSPy Signature | `deepseek-v4-pro` | **0.0130** (Failed - Context Collapse) |
 | V4 | Multi-Agent Orchestration (Extract -> Judge) | `deepseek-v4-flash` | **0.2948** (Failed - Extractor fidelity too low) |
+| V5 | Multi-Agent Orchestration + Dual-Stratified (40 trace matrix) | `deepseek-v4-flash` | **0.9261** (SUCCESS - Exceeds 0.8 target) |
 
 ### Blind Evaluation Data Ingestion
 
