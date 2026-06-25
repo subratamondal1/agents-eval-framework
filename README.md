@@ -1,8 +1,16 @@
 # LLM-as-a-Judge: Voice Sales Evaluation Framework
 
-This repository demonstrates a production-ready framework to automatically evaluate the success (`outcome_booked`) of outbound voice sales calls using a k-calibrated LLM-as-a-Judge system (powered by DSPy and DeepSeek-v4-flash).
+This repository demonstrates a production-ready, mathematically-backed evaluation framework designed to solve two core bottlenecks in Agentic AI: **monolithic hallucination** and **FinOps unit economics**. It automatically evaluates the success (`outcome_booked`) of outbound voice sales calls using a k-calibrated LLM-as-a-Judge system powered by DSPy and DeepSeek.
 
-## Architecture
+## The Paradigm Shift
+
+Traditional evaluation relies on massive monolithic prompts sent to frontier models. This is financially disastrous at scale and causes "data starvation" hallucinations on large context windows. This framework replaces monolithic prompting with three core architectural pillars:
+
+1. **The Extractor → Judge Graph (DSPy):** Instead of asking a single LLM to execute complex logic over 2,000+ token transcripts, the evaluation is split into a deterministic DSPy graph. Node 1 extracts the clean state; Node 2 evaluates the strict boolean logic.
+2. **Composite FinOps Routing:** Models are routed by cognitive load. Heavy extraction routes to DeepSeek V4 Pro; simple logic routes to V4 Flash. This yields Opus-tier reasoning at a **75% cost reduction per call**.
+3. **Autonomous GEPA Optimization:** Hand-tuning system prompts is dead. An offline GEPA (Generate, Evaluate, Propose, Accept) loop parses failure traces and autonomously rewrites the Judge's system instructions.
+
+## Data Stratification & Architecture
 
 We stratify the real-world transcripts into 10 distinct voice sales intents (48 traces each):
 1. `appointment_booking`
