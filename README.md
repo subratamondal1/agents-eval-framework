@@ -190,16 +190,15 @@ The κ score is computed between judge predictions and the true CRM `outcome_boo
 ```bash
 git clone https://github.com/subratamondal1/agents-eval-framework
 cd agents-eval-framework
-uv sync   # or: pip install -r requirements.txt
+uv sync
 
-# Run the eval benchmark
-python eval/run_benchmark.py
-
-# Run the GEPA optimization loop
-python eval/gepa_optimize.py
+# Run the DSPy judge calibration and evaluation benchmark
+uv run python src/scripts/01_calibrate_judge.py
+# or via Makefile:
+make run-calibration
 ```
 
-Set your API keys in `.env`:
+Set your API keys in `.env` (see `.env.example`):
 ```bash
 DEEPSEEK_API_KEY=your_key_here
 FIREWORKS_API_KEY=your_key_here   # optional: for Fireworks-hosted DeepSeek
